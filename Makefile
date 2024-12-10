@@ -2,7 +2,7 @@
 	nvcc -ccbin /usr/bin/gcc-13 -lstdc++ -Isrc/common -o build/$@ $^
 
 %_run : build/%
-	build/$* < src/$*/input.txt
+	build/$* < src/$*/input
 
 clean :
 	rm build/*
