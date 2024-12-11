@@ -47,40 +47,40 @@ int main() {
     std::vector<int> left;
     std::vector<int> right;
 
-    int left_num;
-    int right_num;
+    int leftNum;
+    int rightNum;
 
-    while (std::cin >> left_num >> right_num) {
-        left.push_back(left_num);
-        right.push_back(right_num);
+    while (std::cin >> leftNum >> rightNum) {
+        left.push_back(leftNum);
+        right.push_back(rightNum);
     }
 
-    const auto vec_length = left.size();
+    const auto vecLength = left.size();
 
-    auto *partial_score = new int[blocksPerGrid];
-    int *dev_left, *dev_right, *dev_partial_score;
+    auto *partialScore = new int[blocksPerGrid];
+    int *dev_left, *dev_right, *dev_partialScore;
 
-    CUDA_CHECK(cudaMalloc((void **)&dev_left, vec_length * sizeof(int)));
-    CUDA_CHECK(cudaMalloc((void **)&dev_right, vec_length * sizeof(int)));
-    CUDA_CHECK(cudaMalloc((void **)&dev_partial_score, blocksPerGrid * sizeof(int)));
+    CUDA_CHECK(cudaMalloc((void **)&dev_left, vecLength * sizeof(int)));
+    CUDA_CHECK(cudaMalloc((void **)&dev_right, vecLength * sizeof(int)));
+    CUDA_CHECK(cudaMalloc((void **)&dev_partialScore, blocksPerGrid * sizeof(int)));
 
-    CUDA_CHECK(cudaMemcpy(dev_left, left.data(), vec_length * sizeof(int), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(dev_right, right.data(), vec_length * sizeof(int), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(dev_left, left.data(), vecLength * sizeof(int), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(dev_right, right.data(), vecLength * sizeof(int), cudaMemcpyHostToDevice));
 
-    similarity_score<<<gridDim, blockDim>>>(dev_left, dev_right, dev_partial_score, vec_length);
+    similarity_score<<<gridDim, blockDim>>>(dev_left, dev_right, dev_partialScore, vecLength);
 
-    CUDA_CHECK(cudaMemcpy(partial_score, dev_partial_score, blocksPerGrid * sizeof(int), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(partialScore, dev_partialScore, blocksPerGrid * sizeof(int), cudaMemcpyDeviceToHost));
 
     int score = 0;
     for (int i = 0; i < blocksPerGrid; ++i) {
-        score += partial_score[i];
+        score += partialScore[i];
     }
 
     std::cout << "Similarity score: " << score << std::endl;
 
     cudaFree(dev_left);
     cudaFree(dev_right);
-    cudaFree(dev_partial_score);
+    cudaFree(dev_partialScore);
 
-    delete[] partial_score;
+    delete[] partialScore;
 }

@@ -42,7 +42,7 @@ __device__ bool is_report_safe(int *report, int reportLen) {
             } else if (errors == 1) {
                 errorIdx2 = i;
             }
-            ++errors; 
+            ++errors;
             ret = false;
         }
     }
@@ -160,4 +160,5 @@ int main() {
 
     delete[] reports;
     delete[] reportsLen;
+    delete[] partialSum;
 }

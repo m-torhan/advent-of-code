@@ -110,4 +110,5 @@ int main() {
 
     delete[] reports;
     delete[] reportsLen;
+    delete[] partialSum;
 }
