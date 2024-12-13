@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-constexpr int N = 1024;
+constexpr int N = 32;
 constexpr dim3 blockDim(16, 16);
 constexpr dim3 gridDim(N / blockDim.x, N / blockDim.y);
 constexpr int blocksPerGrid = gridDim.x * gridDim.y;
@@ -23,6 +23,7 @@ __global__ void similarity_score(int *a, int *b, int *c, size_t size) {
             y += blockDim.y * gridDim.y;
         }
         x += blockDim.x * gridDim.x;
+        y = threadIdx.y + blockIdx.y * blockDim.y;
     }
 
     cache[cacheIdx] = partial;

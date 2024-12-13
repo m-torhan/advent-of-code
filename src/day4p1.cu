@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-constexpr int N = 1024;
+constexpr int N = 32;
 constexpr dim3 blockDim(16, 16);
 constexpr dim3 gridDim(N / blockDim.x, N / blockDim.y);
 constexpr int blocksPerGrid = gridDim.x * gridDim.y;
@@ -83,6 +83,7 @@ __device__ int find_words_local(char *letters, int *lettersShape, const char ker
             y += blockDim.y * gridDim.y;
         }
         x += blockDim.x * gridDim.x;
+        y = threadIdx.y + blockIdx.y * blockDim.y;
     }
 
     return count;
@@ -95,13 +96,13 @@ __global__ void find_words(char *letters, int *lettersShape, int *count) {
     int partialCount = 0;
 
     for (int i = 0; i < std::size(kernels4x4); ++i) {
-        partialCount += find_words_local<4,4>(letters, lettersShape, kernels4x4[i]);
+        partialCount += find_words_local<4, 4>(letters, lettersShape, kernels4x4[i]);
     }
     for (int i = 0; i < std::size(kernels4x1); ++i) {
-        partialCount += find_words_local<4,1>(letters, lettersShape, kernels4x1[i]);
+        partialCount += find_words_local<4, 1>(letters, lettersShape, kernels4x1[i]);
     }
     for (int i = 0; i < std::size(kernels1x4); ++i) {
-        partialCount += find_words_local<1,4>(letters, lettersShape, kernels1x4[i]);
+        partialCount += find_words_local<1, 4>(letters, lettersShape, kernels1x4[i]);
     }
 
     cache[cacheIdx] = partialCount;
