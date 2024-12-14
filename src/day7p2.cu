@@ -7,17 +7,55 @@ constexpr int N = 1024;
 constexpr int threadsPerBlock = 256;
 constexpr int blocksPerGrid = std::min(32, 1 + (N - 1) / threadsPerBlock);
 
-__device__ bool is_equation_solvable(unsigned long long *equation, int equationLen) {
-    bool ret = false;
-    unsigned long long numCombinations = 1 << (equationLen - 2);
+enum class Op { ADD, MUL, CAT, NONE };
 
-    for (unsigned long long i = 0; i < numCombinations; ++i) {
+__device__ Op next_op(Op op) {
+    switch (op) {
+    case Op::ADD:
+        return Op::MUL;
+    case Op::MUL:
+        return Op::CAT;
+    default:
+        return Op::NONE;
+    }
+}
+
+__device__ bool next_combination(Op *combination, int combinationLen) {
+    combination[0] = next_op(combination[0]);
+    for (int i = 0; i < combinationLen; ++i) {
+        if (combination[i] == Op::NONE) {
+            combination[i] = Op::ADD;
+            if (i + 1 < combinationLen) {
+                combination[i + 1] = next_op(combination[i + 1]);
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+__device__ bool is_equation_solvable(const unsigned long long *equation, int equationLen) {
+    bool ret = false;
+    Op *combination = new Op[equationLen - 2];
+
+    for (int i = 0; i < equationLen - 2; ++i) {
+        combination[i] = Op::ADD;
+    }
+
+    while (true) {
         unsigned long long result = equation[1];
         for (int j = 2; j < equationLen; ++j) {
-            if ((i >> (j - 2)) & 1) {
+            switch (combination[j - 2]) {
+            case Op::ADD:
                 result += equation[j];
-            } else {
+                break;
+            case Op::MUL:
                 result *= equation[j];
+                break;
+            case Op::CAT:
+                result = result * std::pow(10, (int)std::log10(equation[j]) + 1) + equation[j];
+                break;
             }
             if (result > equation[0]) {
                 break;
@@ -27,7 +65,13 @@ __device__ bool is_equation_solvable(unsigned long long *equation, int equationL
             ret = true;
             break;
         }
+        if (!next_combination(combination, equationLen - 2)) {
+            break;
+        }
     }
+
+    delete[] combination;
+
     return ret;
 }
 
@@ -85,7 +129,7 @@ int main() {
         maxEquationLen = std::max(maxEquationLen, equationsVec.back().size());
     }
 
-    const auto equationsNum = equationsVec.size();
+    const int equationsNum = equationsVec.size();
 
     unsigned long long *equations = new unsigned long long[maxEquationLen * equationsNum];
     int *equationsLen = new int[equationsNum];
